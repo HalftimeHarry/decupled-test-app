@@ -1,0 +1,36 @@
+FROM gitpod/workspace-mysql
+
+USER root
+
+# install via Ubuntu's APT:
+# * Apache - the web server
+# * Multitail - see logs live in the terminal
+RUN apt-get update \
+ && a2dismod mpm_event \
+ && apt-get -y install apache2 multitail \
+ && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/*
+
+# 1. give write permission to the gitpod-user to apache directories
+# 2. let Apache use apache.conf and apache.env.sh from our /workspace/<myproject> folder
+RUN chown -R gitpod:gitpod /var/run/apache2 /var/lock/apache2 /var/log/apache2 \
+ && echo "include \${GITPOD_REPO_ROOT}/apache.conf" > /etc/apache2/apache2.conf \
+ && echo ". \${GITPOD_REPO_ROOT}/apache.env.sh" > /etc/apache2/envvars
+ 
+#install Drupalconsole
+RUN curl https://drupalconsole.com/installer -L -o drupal.phar \
+ && mv drupal.phar /usr/local/bin/drupal \
+ && chmod +x /usr/local/bin/drupal
+ 
+# copy codebase
+git clone git@github.com:drupal-graphql/drupal-decoupled-app.git
+ 
+#Then, you need to build the images
+docker-compose build
+ 
+# Then, start the containers:
+docker-compose up -d
+ 
+# Once started, connect to the cli container of Drupal and install Drupal
+docker-compose exec cli bash
+composer install
+drush si config_installer -y --account-name=admin --account-pass=admin
