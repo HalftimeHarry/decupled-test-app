@@ -20,17 +20,3 @@ RUN chown -R gitpod:gitpod /var/run/apache2 /var/lock/apache2 /var/log/apache2 \
 RUN curl https://drupalconsole.com/installer -L -o drupal.phar \
  && mv drupal.phar /usr/local/bin/drupal \
  && chmod +x /usr/local/bin/drupal
- 
-# copy codebase
-git clone git@github.com:drupal-graphql/drupal-decoupled-app.git
- 
-#Then, you need to build the images
-docker-compose build
- 
-# Then, start the containers:
-docker-compose up -d
- 
-# Once started, connect to the cli container of Drupal and install Drupal
-docker-compose exec cli bash
-composer install
-drush si config_installer -y --account-name=admin --account-pass=admin
